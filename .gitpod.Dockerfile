@@ -1,17 +1,20 @@
 FROM gitpod/workspace-full-vnc:latest
-ARG DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 USER root
 
 # Install Chromium build dependencies
 RUN apt update \
+ && rm /etc/apache2/mods-enabled/mpm_prefork.* \
+ && sed -i 's/export APACHE_SERVER.*$/export APACHE_SERVER_NAME=localhost/' /etc/apache2/envvars \
  && curl -L https://chromium.googlesource.com/chromium/src/+/master/build/install-build-deps.sh?format=TEXT | base64 --decode > /tmp/install-build-deps.sh \
+ && sed -i 's/ snapcraft"/"/' /tmp/install-build-deps.sh \
+ && sed -i 's/sudo apt-get/sudo DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confnew" -y/' /tmp/install-build-deps.sh \
+ && cat /tmp/install-build-deps.sh \
  && sed -ri 's/\(trusty\|xenial\|bionic\|disco\)/(trusty|xenial|bionic|cosmic|disco)/' /tmp/install-build-deps.sh \
  && chmod +x /tmp/install-build-deps.sh \
  && echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections \
  && /tmp/install-build-deps.sh --no-prompt --no-arm --no-chromeos-fonts --no-nacl \
- && wget -qO /tmp/libgcrypt11.deb https://launchpad.net/ubuntu/+archive/primary/+files/libgcrypt11_1.5.3-2ubuntu4.2_amd64.deb \
- && dpkg -i /tmp/libgcrypt11.deb \
- && rm -rf /tmp/install-build-deps.sh /tmp/libgcrypt11.deb /var/lib/apt/lists/*
+ && rm -rf /tmp/install-build-deps.sh /var/lib/apt/lists/*
 
 # Install the latest Ninja.
 RUN git clone https://github.com/ninja-build/ninja /tmp/ninja \
