@@ -1,5 +1,5 @@
 FROM gitpod/workspace-full-vnc:latest
-
+ARG DEBIAN_FRONTEND=noninteractive
 USER root
 
 # Install Chromium build dependencies
